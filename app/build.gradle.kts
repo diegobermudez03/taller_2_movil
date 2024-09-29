@@ -4,12 +4,15 @@ plugins {
 }
 
 android {
+
     namespace = "com.compumovil.taller_2"
     compileSdk = 34
 
     buildFeatures{
         viewBinding = true
     }
+
+
 
     defaultConfig {
         applicationId = "com.compumovil.taller_2"
