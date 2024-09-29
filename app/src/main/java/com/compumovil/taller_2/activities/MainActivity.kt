@@ -1,10 +1,9 @@
-package com.compumovil.taller_2
+package com.compumovil.taller_2.activities
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.compumovil.taller_2.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +17,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnCamera.setOnClickListener{
-
+            val intent = Intent(this, CameraActivity::class.java)
+            startActivity(intent)
         }
 
     }

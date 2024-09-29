@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activities.MainActivity">
 
 
     <com.google.android.material.button.MaterialButton
@@ -36,7 +36,6 @@
         android:text="@string/open_map"
         android:textColor="@color/black"
         android:drawableTop="@drawable/baseline_location_on_24"
-        android:iconGravity="top"
         android:drawableTint="@color/black"
         android:paddingTop="20dp"
         android:backgroundTint="#e9e2e2"
