@@ -23,14 +23,13 @@ import com.compumovil.taller_2.databinding.FragmentGaleriaBinding
 class GaleriaFragment : Fragment() {
     private lateinit var binding: FragmentGaleriaBinding
 
-    // Launchers para la galería y permisos
+
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var pickMediaLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Registrar el lanzador para la solicitud de permisos
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 startGallery(binding.isPhotoOrVideoSwitchGaleria.isChecked)
@@ -39,7 +38,7 @@ class GaleriaFragment : Fragment() {
             }
         }
 
-        // Registrar el lanzador para seleccionar imágenes o videos de la galería
+        // Register launcher
         pickMediaLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) {
                 displayMedia(uri)
@@ -61,28 +60,40 @@ class GaleriaFragment : Fragment() {
         return binding.root
     }
 
-    // Verificar si el permiso de almacenamiento está concedido y solicitarlo si es necesario
+    // Check if the permission has been granted or request it
     private fun checkStoragePermissionAndGetImage() {
-        val permission = if(binding.isPhotoOrVideoSwitchGaleria.isChecked) Manifest.permission.READ_MEDIA_VIDEO else Manifest.permission.READ_MEDIA_IMAGES
+        val permission = when {
+            android.os.Build.VERSION.SDK_INT < 33 -> {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+
+            binding.isPhotoOrVideoSwitchGaleria.isChecked -> {
+                Manifest.permission.READ_MEDIA_VIDEO
+            }
+
+            else -> {
+                Manifest.permission.READ_MEDIA_IMAGES
+            }
+        }
         when {
             ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED -> {
-                // Permiso concedido, abrir galería
+                // Permisss granted
                 startGallery(binding.isPhotoOrVideoSwitchGaleria.isChecked)
             }
             else -> {
-                // Permiso no concedido, solicitarlo
+                // Permiss not granted, request it
                 requestPermissionLauncher.launch(permission)
             }
         }
     }
 
-    // Abrir la galería dependiendo si es foto o video
+    // Open images or video depending
     private fun startGallery(isVideo: Boolean) {
         val type = if (isVideo) "video/*" else "image/*"
         pickMediaLauncher.launch(type)
     }
 
-    // Mostrar la imagen o video seleccionado
+    // display the image or video
     private fun displayMedia(uri: Uri) {
         binding.previewGaleria.removeAllViews()
 

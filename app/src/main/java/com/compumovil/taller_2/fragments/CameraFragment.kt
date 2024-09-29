@@ -1,8 +1,10 @@
 package com.compumovil.taller_2.fragments
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -17,6 +19,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.MediaController
 import android.widget.VideoView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.compumovil.taller_2.databinding.FragmentCameraBinding
 import java.io.File
@@ -28,11 +33,34 @@ import java.util.Locale
 class CameraFragment : Fragment() {
     private lateinit var binding: FragmentCameraBinding
     private lateinit var currentFilePath: String
-    private val REQUEST_CAPTURE = 1
     private lateinit var fileURI: Uri
+    private val REQUEST_CAPTURE = 1
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+
+    // Check if the permission has been granted or request it
+    private fun checkStoragePermissionAndGetImage() {
+        val permission = if(binding.isPhotoOrVideoSwitchCamara.isChecked) Manifest.permission.CAMERA else Manifest.permission.CAMERA
+        when {
+            ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED -> {
+                // Permisss granted
+                dispatchTakePictureIntent()
+            }
+            else -> {
+                // Permiss not granted, request it
+                requestPermissionLauncher.launch(permission)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                dispatchTakePictureIntent()
+            } else {
+                println("Permiso no concedido")
+            }
+        }
     }
 
     override fun onCreateView(
@@ -41,7 +69,7 @@ class CameraFragment : Fragment() {
     ): View {
         // Inflate the layout for this fragment
         binding = FragmentCameraBinding.inflate(inflater, container, false)
-        binding.buttonCamera.setOnClickListener { dispatchTakePictureIntent() }
+        binding.buttonCamera.setOnClickListener { checkStoragePermissionAndGetImage() }
 
         return binding.root
     }
@@ -90,6 +118,7 @@ class CameraFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        println("request codd ${requestCode} result code ${resultCode}")
         when {
             requestCode == REQUEST_CAPTURE && resultCode == RESULT_OK -> {
                 binding.previewCamara.removeAllViews()
@@ -98,23 +127,31 @@ class CameraFragment : Fragment() {
                         ImageView(activity)
                     else
                         VideoView(activity)
+
                 newView.layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     Gravity.CENTER
                 )
                 binding.previewCamara.foregroundGravity = View.TEXT_ALIGNMENT_CENTER
+
                 if (!binding.isPhotoOrVideoSwitchCamara.isChecked) {
                     (newView as ImageView).setImageURI(fileURI)
                     newView.scaleType = ImageView.ScaleType.FIT_CENTER
                     newView.adjustViewBounds = true
                 } else {
                     (newView as VideoView).setVideoURI(fileURI)
-                    newView.foregroundGravity = View.TEXT_ALIGNMENT_CENTER
                     newView.setMediaController(MediaController(activity))
                     newView.start()
                     newView.setOnPreparedListener { mp ->
                         mp.isLooping = true
+                    }
+
+                    // Add an OnErrorListener to handle any playback errors
+                    newView.setOnErrorListener { _, what, extra ->
+                        // Log or handle the error
+                        println("Video playback error: $what, $extra")
+                        true
                     }
                 }
                 binding.previewCamara.addView(newView)
@@ -124,4 +161,5 @@ class CameraFragment : Fragment() {
             }
         }
     }
+
 }
